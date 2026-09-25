@@ -46,10 +46,14 @@
 
         <!-- SEZIONE 1: TURNI POMERIDIANI -->
         <section class="bg-white/95 backdrop-blur-sm border border-gray-300 p-4 mb-4 shadow-sm rounded-none">
-            <h2 class="text-xs font-bold text-brand uppercase tracking-wider mb-3 flex items-center gap-2">
-                <span class="w-2 h-2 bg-brand rounded-none"></span>
-                Turni Pomeridiani Settimanali
-            </h2>
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
+                <h2 class="text-xs font-bold text-brand uppercase tracking-wider flex items-center gap-2">
+                    <span class="w-2 h-2 bg-brand rounded-none"></span>
+                    Turni Pomeridiani Settimanali
+                </h2>
+                <!-- Etichetta Settimana in evidenza, grassetto e più grande -->
+                <span id="labelSettimanaIndex" class="text-xs md:text-sm font-bold text-brand bg-red-50 px-2 py-1 border border-red-200">Caricamento settimana...</span>
+            </div>
 
             <!-- VERSIONE DESKTOP (Visibile solo su schermi grandi) -->
             <div class="hidden md:block space-y-2">
@@ -247,7 +251,7 @@
                 </div>
             </div>
 
-            <!-- VERSIONE MOBILE FERIE (Compatta e affiancata) -->
+            <!-- VERSIONE MOBILE FERIE -->
             <div class="block md:hidden space-y-2">
                 <!-- Matteo Mobile -->
                 <div class="p-2.5 bg-gray-50 border border-gray-200">
@@ -326,7 +330,7 @@
                 </div>
             </div>
 
-            <!-- VERSIONE MOBILE PERMESSI (Tutto su un'unica riga: Giorno, Dalle, Alle) -->
+            <!-- VERSIONE MOBILE PERMESSI -->
             <div class="block md:hidden space-y-2">
                 <!-- Matteo Mobile -->
                 <div class="p-2.5 bg-gray-50 border border-gray-200">
@@ -394,7 +398,7 @@
         </div>
     </div>
 
-    <!-- POP-UP NOTIFICA PERSONALIZZATO (SOSTITUISCE ALERT) -->
+    <!-- POP-UP NOTIFICA PERSONALIZZATO -->
     <div id="modalMessaggio" class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center hidden z-50 p-4">
         <div class="bg-white border-2 border-brand p-5 w-full max-w-sm rounded-none shadow-2xl text-center">
             <h3 class="font-bold text-sm text-brand uppercase tracking-wider mb-2">Notifica</h3>
@@ -403,7 +407,7 @@
         </div>
     </div>
 
-    <!-- POP-UP CONFERMA PERSONALIZZATO (SOSTITUISCE CONFIRM) -->
+    <!-- POP-UP CONFERMA PERSONALIZZATO -->
     <div id="modalConferma" class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center hidden z-50 p-4">
         <div class="bg-white border-2 border-brand p-5 w-full max-w-sm rounded-none shadow-2xl text-center">
             <h3 class="font-bold text-sm text-brand uppercase tracking-wider mb-2">Conferma Operazione</h3>
@@ -526,7 +530,36 @@
 
         let datiCorrenti = { turni: {}, ferie: { matteo: [], filippo: [], ilaria: [] }, permessi: { matteo: [], filippo: [], ilaria: [] } };
 
-        // Funzione per formattare la data da YYYY-MM-DD a DD/MM/YYYY
+        // Funzione per generare automaticamente la stringa della settimana (trattino se stesso mese, 'e' se mesi diversi)
+        function aggiornaTestoSettimana(elementId) {
+            const mesi = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+            const oggi = new Date();
+            const day = oggi.getDay();
+            const diffToMon = oggi.getDate() - day + (day === 0 ? -6 : 1);
+            
+            const lunedi = new Date(new Date().setDate(diffToMon));
+            const domenica = new Date(new Date(lunedi).setDate(lunedi.getDate() + 6));
+
+            const gL = lunedi.getDate();
+            const mMun = lunedi.getMonth();
+            const gD = domenica.getDate();
+            const mDom = domenica.getMonth();
+            const anno = domenica.getFullYear();
+
+            const mL = mesi[mMun];
+            const mD = mesi[mDom];
+
+            let testo = "";
+            if (mMun === mDom) {
+                testo = `Settimana di lunedì ${gL} - domenica ${gD} ${mD} ${anno}`;
+            } else {
+                testo = `Settimana di lunedì ${gL} ${mL} e domenica ${gD} ${mD} ${anno}`;
+            }
+
+            const el = document.getElementById(elementId);
+            if (el) el.innerText = testo;
+        }
+
         function formattaData(dataStr) {
             if (!dataStr) return 'Non specificato';
             const parti = dataStr.split('-');
@@ -536,7 +569,6 @@
             return dataStr;
         }
 
-        // Gestione Pop-up personalizzati (Sostituiscono alert e confirm)
         window.mostraMessaggio = (testo) => {
             document.getElementById('messaggioTesto').innerText = testo;
             document.getElementById('modalMessaggio').classList.remove('hidden');
@@ -586,6 +618,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            aggiornaTestoSettimana('labelSettimanaIndex');
             try {
                 const docSnap = await getDoc(doc(db, "stazione", "dati_completi"));
                 if (docSnap.exists()) {

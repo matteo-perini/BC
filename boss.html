@@ -46,10 +46,14 @@
 
         <!-- SEZIONE 1: TURNI POMERIDIANI SETTIMANALI -->
         <section class="bg-white/95 backdrop-blur-sm border border-gray-300 p-4 mb-4 shadow-sm rounded-none">
-            <h2 class="text-xs font-bold text-brand uppercase tracking-wider mb-3 flex items-center gap-2">
-                <span class="w-2 h-2 bg-brand rounded-none"></span>
-                Turni Pomeridiani Settimanali
-            </h2>
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
+                <h2 class="text-xs font-bold text-brand uppercase tracking-wider flex items-center gap-2">
+                    <span class="w-2 h-2 bg-brand rounded-none"></span>
+                    Turni Pomeridiani Settimanali
+                </h2>
+                <!-- Etichetta Settimana in evidenza, grassetto e più grande -->
+                <span id="labelSettimanaBoss" class="text-xs md:text-sm font-bold text-brand bg-red-50 px-2 py-1 border border-red-200">Caricamento settimana...</span>
+            </div>
 
             <!-- VERSIONE DESKTOP (Tabella completa) -->
             <div class="hidden md:block overflow-x-auto">
@@ -79,7 +83,7 @@
                 </table>
             </div>
 
-            <!-- VERSIONE MOBILE (Righe singole per ogni persona con Mercoledì e Sabato affiancati) -->
+            <!-- VERSIONE MOBILE -->
             <div class="block md:hidden space-y-2">
                 <!-- Matteo Mobile -->
                 <div class="p-2.5 bg-red-50/50 border border-red-200">
@@ -336,7 +340,36 @@
 
         let datiGlobali = null;
 
-        // Funzione per formattare la data da YYYY-MM-DD a DD/MM/YYYY
+        // Funzione per generare automaticamente la stringa della settimana (trattino se stesso mese, 'e' se mesi diversi)
+        function aggiornaTestoSettimana(elementId) {
+            const mesi = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+            const oggi = new Date();
+            const day = oggi.getDay();
+            const diffToMon = oggi.getDate() - day + (day === 0 ? -6 : 1);
+            
+            const lunedi = new Date(new Date().setDate(diffToMon));
+            const domenica = new Date(new Date(lunedi).setDate(lunedi.getDate() + 6));
+
+            const gL = lunedi.getDate();
+            const mMun = lunedi.getMonth();
+            const gD = domenica.getDate();
+            const mDom = domenica.getMonth();
+            const anno = domenica.getFullYear();
+
+            const mL = mesi[mMun];
+            const mD = mesi[mDom];
+
+            let testo = "";
+            if (mMun === mDom) {
+                testo = `Settimana di lunedì ${gL} - domenica ${gD} ${mD} ${anno}`;
+            } else {
+                testo = `Settimana di lunedì ${gL} ${mL} e domenica ${gD} ${mD} ${anno}`;
+            }
+
+            const el = document.getElementById(elementId);
+            if (el) el.innerText = testo;
+        }
+
         function formattaData(dataStr) {
             if (!dataStr) return 'Non specificato';
             const parti = dataStr.split('-');
@@ -347,6 +380,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            aggiornaTestoSettimana('labelSettimanaBoss');
             try {
                 const docSnap = await getDoc(doc(db, "stazione", "dati_completi"));
                 if (docSnap.exists()) {
@@ -358,7 +392,6 @@
                                 const merc = datiGlobali.turni[nome].mercoledi || '-';
                                 const sab = datiGlobali.turni[nome].sabato || '-';
 
-                                // Versione Desktop con colori dinamici (Verde per Presente, Rosso per Assente)
                                 const elDeskMerc = document.getElementById(`desk_${nome}_mercoledi`);
                                 const elDeskSab = document.getElementById(`desk_${nome}_sabato`);
                                 
@@ -371,7 +404,6 @@
                                     elDeskSab.className = `p-2 border border-gray-300 text-center font-bold ${sab === 'Presente' ? 'text-green-600' : (sab === 'Assente' ? 'text-red-600' : 'text-gray-900')}`;
                                 }
 
-                                // Versione Mobile
                                 const elMobMerc = document.getElementById(`mob_${nome}_mercoledi`);
                                 const elMobSab = document.getElementById(`mob_${nome}_sabato`);
                                 if(elMobMerc) {
